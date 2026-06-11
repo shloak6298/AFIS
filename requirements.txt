@@ -1,0 +1,12 @@
+# Module 2 — User Behavior & Investigation Engine
+# Core Dependencies
+pandas==2.2.3
+networkx==3.4.2
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.4
+langchain==0.3.14
+langchain-ollama==0.3.0
+python-multipart==0.0.20
+scipy==1.15.1
+geopy==2.4.1
