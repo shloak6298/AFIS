@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Financial Investigation System — Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- D3.js for Network Visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-shield-halved brand-icon"></i>
+                <div class="brand-text">
+                    <h2>AFIS Engine</h2>
+                    <span>Autonomous Auditing</span>
+                </div>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-view="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Overview
+                </a>
+                <a href="#" class="menu-item" data-view="investigations">
+                    <i class="fa-solid fa-list-check"></i> Audited Transactions
+                </a>
+                <a href="#" class="menu-item" data-view="new-investigation">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> New Audit
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar">S</div>
+                    <div class="user-info">
+                        <h4>Shloak</h4>
+                        <span>Compliance Officer</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="global-search" placeholder="Search by Tx ID or User ID...">
+                </div>
+                <div class="header-actions">
+                    <div class="status-indicator online">
+                        <span class="pulse"></span> Connected to API
+                    </div>
+                    <button id="quick-audit-btn" class="btn btn-primary">
+                        <i class="fa-solid fa-bolt"></i> Quick Audit
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="content-view active">
+                <div class="view-header">
+                    <h1>System Overview</h1>
+                    <p>Real-time telemetry and risk distribution from the automated investigation engine.</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon info"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-total-audits">0</h3>
+                            <span>Total Audits</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-critical-cases">0</h3>
+                            <span>Critical Cases</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-high-risk">0</h3>
+                            <span>High Risk Cases</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon success"><i class="fa-solid fa-shield-check"></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-avg-score">0.00</h3>
+                            <span>Avg Risk Score</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Content Split -->
+                <div class="content-split">
+                    <!-- Left: Recent Audits -->
+                    <div class="split-left glass-panel">
+                        <div class="panel-header">
+                            <h2>Recent Investigations</h2>
+                            <a href="#" class="view-all-link" id="view-all-investigations">View All</a>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Investigation ID</th>
+                                        <th>Transaction ID</th>
+                                        <th>User ID</th>
+                                        <th>Composite Risk</th>
+                                        <th>Escalation</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-audits-table">
+                                    <tr>
+                                        <td colspan="6" class="text-center">No investigations completed yet. Click 'Quick Audit' to start.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right: Pending High Risk Transactions from Module 1 -->
+                    <div class="split-right glass-panel">
+                        <div class="panel-header">
+                            <h2>Flagged Alerts Queue</h2>
+                            <span class="badge badge-risk">Awaiting Audit</span>
+                        </div>
+                        <div class="alerts-list" id="flagged-queue-list">
+                            <div class="loading-placeholder">Loading alerts queue...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- All Investigations List View -->
+            <section id="view-investigations" class="content-view">
+                <div class="view-header">
+                    <h1>Audited Transactions</h1>
+                    <p>Historical audit trails saved in the local compliance database.</p>
+                </div>
+                <div class="glass-panel">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Investigation ID</th>
+                                    <th>Transaction ID</th>
+                                    <th>User ID</th>
+                                    <th>Composite Risk</th>
+                                    <th>Escalation Decision</th>
+                                    <th>Date Created</th>
+                                    <th>Report</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-audits-table">
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading audit trails...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trigger New Audit View -->
+            <section id="view-new-investigation" class="content-view">
+                <div class="view-header">
+                    <h1>Trigger New Investigation</h1>
+                    <p>Enter a transaction ID flagged by the classifier to execute a multi-engine audit.</p>
+                </div>
+                <div class="new-audit-form glass-panel">
+                    <div class="form-group">
+                        <label for="input-txn-id">Transaction ID</label>
+                        <input type="text" id="input-txn-id" placeholder="e.g. TXN-00042" value="TXN-00042">
+                    </div>
+                    <div class="form-group">
+                        <label for="select-priority">Investigation Priority</label>
+                        <select id="select-priority">
+                            <option value="AUTO">AUTO (Determined by Risk Score)</option>
+                            <option value="LOW">LOW</option>
+                            <option value="MEDIUM">MEDIUM</option>
+                            <option value="HIGH">HIGH</option>
+                        </select>
+                    </div>
+                    <button id="submit-audit-btn" class="btn btn-primary">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i> Execute Investigation
+                    </button>
+                </div>
+            </section>
+
+            <!-- Investigation Detail View (Modular Overlay / Slide in) -->
+            <section id="view-investigation-detail" class="content-view">
+                <div class="detail-header-bar">
+                    <button class="btn btn-secondary" id="back-to-list-btn">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                    <div class="detail-title-group">
+                        <h1 id="detail-inv-id">INV-2026-001</h1>
+                        <span id="detail-escalation-badge" class="badge">CRITICAL</span>
+                    </div>
+                    <button class="btn btn-success" id="btn-approve-alert">
+                        <i class="fa-solid fa-check"></i> Approve Review
+                    </button>
+                </div>
+
+                <!-- Detail Dashboard Grid -->
+                <div class="detail-grid">
+                    <!-- Left: Metadata & Anomaly Cards -->
+                    <div class="detail-left">
+                        <!-- Transaction Info Panel -->
+                        <div class="glass-panel info-summary-panel">
+                            <h3>Audit Metadata</h3>
+                            <div class="meta-item-grid">
+                                <div class="meta-item"><strong>Transaction ID:</strong> <span id="meta-tx-id">-</span></div>
+                                <div class="meta-item"><strong>User ID:</strong> <span id="meta-user-id">-</span></div>
+                                <div class="meta-item"><strong>Amount:</strong> <span id="meta-amount">-</span></div>
+                                <div class="meta-item"><strong>Location:</strong> <span id="meta-location">-</span></div>
+                                <div class="meta-item"><strong>IP Address:</strong> <span id="meta-ip">-</span></div>
+                                <div class="meta-item"><strong>Device:</strong> <span id="meta-device">-</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Anomaly cards container -->
+                        <div class="cards-header-title">
+                            <h3>Engine Risk Breakdown</h3>
+                            <span class="composite-indicator">Composite Risk: <strong id="composite-score-percentage">0%</strong></span>
+                        </div>
+                        <div class="anomaly-cards-grid" id="anomaly-cards-container">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Graph Linkage Visualization -->
+                    <div class="detail-right">
+                        <div class="glass-panel graph-panel">
+                            <div class="panel-header">
+                                <h3>Linked Account Graph</h3>
+                                <span class="badge">Network Links (D3.js)</span>
+                            </div>
+                            <div id="graph-visualization-area">
+                                <!-- D3 Network SVG gets inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lower Grid: Timeline & LLM Report Summary -->
+                <div class="detail-lower-split">
+                    <!-- Left: Timeline -->
+                    <div class="glass-panel timeline-panel">
+                        <h3>Investigation Trace Timeline</h3>
+                        <div class="vertical-timeline" id="timeline-container">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Right: LLM Summary Report -->
+                    <div class="glass-panel report-panel">
+                        <div class="panel-header">
+                            <h3>FIU Investigation Summary</h3>
+                            <button class="btn btn-secondary btn-sm" id="btn-copy-report">
+                                <i class="fa-solid fa-copy"></i> Copy Report
+                            </button>
+                        </div>
+                        <div class="report-content-body" id="llm-report-content">
+                            <!-- Report text -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="components/network-graph.js"></script>
+    <script src="components/timeline.js"></script>
+    <script src="components/anomaly-cards.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
